@@ -5,6 +5,8 @@ Interactive backpacking route planner for a two-week student trip starting in Li
 The demo includes:
 
 - three route options
+- route comparison dashboard with cost, travel-time, risk and vibe scores
+- interactive budget calculator for hostel level, transport mode, food, nightlife, activities and buffer
 - transport notes by leg
 - date-aware accommodation cards with public availability signals, rough hostel costs and exact-date check links
 - food, nightlife and activity shortlists

@@ -215,6 +215,7 @@ a {
   color: rgba(255, 253, 248, 0.78);
 }
 
+.decision-card,
 .route-card,
 .city-card,
 .transport-card,
@@ -228,7 +229,9 @@ a {
 }
 
 .route-card-top,
-.city-head {
+.city-head,
+.decision-head,
+.budget-head {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
@@ -238,7 +241,8 @@ a {
 
 .route-card h3,
 .city-card h3,
-.section-head h3 {
+.section-head h3,
+.decision-card h3 {
   margin: 3px 0 0;
   font-size: 1.45rem;
   line-height: 1.05;
@@ -266,6 +270,269 @@ a {
   color: var(--sea-dark);
   background: rgba(13, 113, 128, 0.1);
   text-decoration: none;
+}
+
+.decision-card {
+  display: grid;
+  gap: 14px;
+}
+
+.decision-chip {
+  display: inline-flex;
+  align-items: center;
+  max-width: 184px;
+  min-height: 30px;
+  padding: 6px 9px;
+  color: var(--sea-dark);
+  font-size: 0.74rem;
+  font-weight: 900;
+  line-height: 1.2;
+  background: rgba(13, 113, 128, 0.1);
+  border-radius: 8px;
+}
+
+.comparison-grid {
+  display: grid;
+  gap: 8px;
+}
+
+.comparison-route {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 5px 12px;
+  width: 100%;
+  padding: 11px;
+  text-align: left;
+  color: var(--ink);
+  background: rgba(246, 241, 232, 0.7);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.comparison-route.active {
+  background: #fffdf8;
+  border-color: rgba(13, 113, 128, 0.44);
+  box-shadow: 0 10px 24px rgba(13, 113, 128, 0.11);
+}
+
+.comparison-route strong {
+  min-width: 0;
+  font-size: 0.98rem;
+  line-height: 1.2;
+}
+
+.comparison-label,
+.comparison-sub,
+.comparison-route small,
+.decision-note {
+  color: var(--muted);
+  font-size: 0.78rem;
+  line-height: 1.36;
+}
+
+.comparison-price {
+  grid-column: 2;
+  grid-row: 1 / span 2;
+  color: var(--sea-dark);
+  font-size: 1.06rem;
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+.comparison-sub,
+.comparison-route small {
+  grid-column: 1 / -1;
+}
+
+.risk-line {
+  grid-column: 1 / -1;
+  width: fit-content;
+  padding: 4px 7px;
+  color: #fffdf8;
+  font-size: 0.72rem;
+  font-weight: 900;
+  border-radius: 999px;
+}
+
+.risk-2 {
+  background: var(--green);
+}
+
+.risk-3 {
+  background: var(--gold);
+}
+
+.risk-4 {
+  background: var(--coral);
+}
+
+.metric-row {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 7px;
+}
+
+.score {
+  display: grid;
+  gap: 4px;
+}
+
+.score span {
+  color: var(--muted);
+  font-size: 0.68rem;
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.score i {
+  display: block;
+  height: 6px;
+  overflow: hidden;
+  background: rgba(13, 113, 128, 0.13);
+  border-radius: 999px;
+}
+
+.score i::before {
+  display: block;
+  width: calc(var(--score) * 20%);
+  height: 100%;
+  content: "";
+  background: var(--sea);
+  border-radius: inherit;
+}
+
+.decision-note {
+  margin: 10px 0 0;
+}
+
+.budget-head {
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
+}
+
+.budget-total {
+  min-width: 132px;
+  padding: 9px;
+  text-align: right;
+  background: rgba(13, 113, 128, 0.09);
+  border-radius: 8px;
+}
+
+.budget-total span,
+.budget-total em {
+  display: block;
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-style: normal;
+  font-weight: 800;
+}
+
+.budget-total strong {
+  display: block;
+  margin: 3px 0;
+  color: var(--sea-dark);
+  font-size: 1.28rem;
+  line-height: 1;
+}
+
+.budget-breakdown {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.budget-breakdown div {
+  min-width: 0;
+  padding: 9px;
+  background: rgba(246, 241, 232, 0.72);
+  border: 1px solid rgba(217, 208, 191, 0.82);
+  border-radius: 8px;
+}
+
+.budget-breakdown span {
+  display: block;
+  color: var(--muted);
+  font-size: 0.68rem;
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.budget-breakdown strong {
+  display: block;
+  margin-top: 4px;
+  color: var(--ink);
+  font-size: 0.98rem;
+}
+
+.budget-controls {
+  display: grid;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.control-group {
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.control-group legend,
+.range-control > span {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 6px;
+  color: var(--sea-dark);
+  font-size: 0.72rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.range-control strong {
+  color: var(--ink);
+  letter-spacing: 0;
+}
+
+.segment-row {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.segment-button {
+  min-height: 34px;
+  padding: 6px 8px;
+  color: var(--ink);
+  font-size: 0.76rem;
+  font-weight: 900;
+  line-height: 1.2;
+  background: rgba(246, 241, 232, 0.72);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.segment-button.active {
+  color: #fffdf8;
+  background: var(--sea-dark);
+  border-color: var(--sea-dark);
+}
+
+.range-control {
+  display: grid;
+  gap: 3px;
+}
+
+.range-control input {
+  width: 100%;
+  accent-color: var(--sea);
 }
 
 .route-copy,
@@ -751,12 +1018,35 @@ a {
 
   .route-card-top,
   .city-head,
+  .decision-head,
+  .budget-head,
   .city-basics,
   .availability-card .section-head,
   .availability-kpis,
+  .budget-breakdown,
   .stay-option-top,
   .transport-row-top {
     display: grid;
+  }
+
+  .decision-chip,
+  .budget-total {
+    max-width: none;
+    text-align: left;
+  }
+
+  .comparison-route {
+    grid-template-columns: 1fr;
+  }
+
+  .comparison-price {
+    grid-column: auto;
+    grid-row: auto;
+  }
+
+  .metric-row,
+  .segment-row {
+    grid-template-columns: 1fr;
   }
 
   .stay-option-top strong {

@@ -441,6 +441,68 @@ const stayDetails = {
   balea: stay("Listed", "watch", "Dorms from €34.50", "Hostelworld lists Balea with dorms only.", "Budget fallback outside the core; useful if central beds are gone."),
 };
 
+const routeBudgetProfiles = {
+  classic: {
+    bestFor: "Best balance",
+    watch: "San Sebastian beds and Portugal coast transfers",
+    coast: 5,
+    cities: 4,
+    nightlife: 4,
+    nightOuts: 9,
+    risk: "Medium-high",
+    riskScore: 3,
+    transport: {
+      coach: { cost: 155, hours: 21 },
+      train: { cost: 190, hours: 19 },
+      car: { cost: 235, hours: 16 },
+    },
+  },
+  "galicia-bilbao": {
+    bestFor: "Easiest finish",
+    watch: "Long Galicia to San Sebastian travel day",
+    coast: 3,
+    cities: 5,
+    nightlife: 5,
+    nightOuts: 10,
+    risk: "Medium",
+    riskScore: 2,
+    transport: {
+      coach: { cost: 145, hours: 18 },
+      train: { cost: 205, hours: 17 },
+      car: { cost: 225, hours: 14 },
+    },
+  },
+  biarritz: {
+    bestFor: "Most coastal",
+    watch: "Biarritz prices plus San Sebastian festival demand",
+    coast: 5,
+    cities: 3,
+    nightlife: 4,
+    nightOuts: 9,
+    risk: "High",
+    riskScore: 4,
+    transport: {
+      coach: { cost: 180, hours: 24 },
+      train: { cost: 245, hours: 22 },
+      car: { cost: 270, hours: 18 },
+    },
+  },
+};
+
+const fallbackStayRates = {
+  lisbon: { budget: 20, balanced: 28, better: 45 },
+  ericeira: { budget: 18, balanced: 24, better: 34 },
+  peniche: { budget: 22, balanced: 30, better: 42 },
+  nazare: { budget: 25, balanced: 31, better: 40 },
+  coimbra: { budget: 15, balanced: 22, better: 30 },
+  porto: { budget: 18, balanced: 25, better: 36 },
+  vigo: { budget: 30, balanced: 42, better: 55 },
+  santiago: { budget: 20, balanced: 27, better: 36 },
+  bilbao: { budget: 20, balanced: 29, better: 40 },
+  biarritz: { budget: 42, balanced: 50, better: 62 },
+  sansebastian: { budget: 35, balanced: 42, better: 55 },
+};
+
 const sources = [
   ["San Sebastian Semana Grande 2026", "https://sansebastianturismoa.eus/en/agenda/semana-grande-2026/", "Official 8-15 August 2026 festival listing."],
   ["San Sebastian pintxos", "https://sansebastianturismoa.eus/en/gastronomy/going-for-pintxos/", "Official pintxo context and food areas."],
@@ -481,6 +543,14 @@ let placeLayer;
 let selectedRouteId = "classic";
 let selectedCityId = routes[0].stops[0].cityId;
 let selectedCategory = "all";
+let budgetSettings = {
+  accommodation: "budget",
+  transport: "coach",
+  foodDaily: 28,
+  nightlifeSpend: 18,
+  activityFund: 90,
+  bufferPercent: 10,
+};
 const placeMarkers = new Map();
 
 function city(name, country, lat, lng, zoom, summary, area, booking, places) {
@@ -551,6 +621,7 @@ function initMap() {
 
 function renderAll() {
   renderRouteChoices();
+  renderDecisionTools();
   renderRouteCard();
   renderItinerary();
   renderCity();
@@ -574,17 +645,240 @@ function renderRouteChoices() {
     .join("");
 
   routeChoices.querySelectorAll(".route-choice").forEach((button) => {
+    button.addEventListener("click", () => selectRoute(button.dataset.route));
+  });
+}
+
+function selectRoute(routeId) {
+  selectedRouteId = routeId;
+  selectedCityId = currentRoute().stops[0].cityId;
+  renderRouteChoices();
+  renderDecisionTools();
+  renderRouteCard();
+  renderItinerary();
+  renderCity();
+  renderTransport();
+  drawRoute(true);
+}
+
+function renderDecisionTools() {
+  renderRouteComparison();
+  renderBudgetCalculator();
+}
+
+function renderRouteComparison() {
+  const estimates = routes.map((route) => routeBudgetEstimate(route));
+  const cheapest = estimates.reduce((winner, estimate) => (estimate.total < winner.total ? estimate : winner), estimates[0]);
+  const comparison = document.querySelector("#routeComparison");
+  comparison.innerHTML = `
+    <div class="decision-head">
+      <div>
+        <p class="eyebrow">Decision dashboard</p>
+        <h3>Compare the routes</h3>
+      </div>
+      <span class="decision-chip">Cheapest: ${cheapest.route.name.replace("Option ", "")}</span>
+    </div>
+    <div class="comparison-grid">
+      ${estimates.map((estimate) => renderComparisonRoute(estimate)).join("")}
+    </div>
+    <p class="decision-note">
+      Estimates use the hostel price signals already in the app plus planning ranges for intercity transport.
+      Treat them as booking targets, not final quotes.
+    </p>
+  `;
+
+  comparison.querySelectorAll(".comparison-route").forEach((button) => {
+    button.addEventListener("click", () => selectRoute(button.dataset.route));
+  });
+}
+
+function renderComparisonRoute(estimate) {
+  const route = estimate.route;
+  const profile = routeBudgetProfiles[route.id];
+  return `
+    <button class="comparison-route ${route.id === selectedRouteId ? "active" : ""}" type="button" data-route="${route.id}">
+      <span class="comparison-label">${profile.bestFor}</span>
+      <strong>${route.name}</strong>
+      <span class="comparison-price">${formatEuro(estimate.total)} pp</span>
+      <span class="comparison-sub">${formatEuro(estimate.groupTotal)} group | ${estimate.transportHours} travel hrs</span>
+      <span class="risk-line risk-${profile.riskScore}">${profile.risk} booking risk</span>
+      <span class="metric-row">${scoreBar("Sea", profile.coast)}${scoreBar("Cities", profile.cities)}${scoreBar("Nights", profile.nightlife)}</span>
+      <small>${profile.watch}</small>
+    </button>
+  `;
+}
+
+function scoreBar(label, score) {
+  return `
+    <span class="score">
+      <span>${label}</span>
+      <i style="--score:${score}"></i>
+    </span>
+  `;
+}
+
+function renderBudgetCalculator() {
+  const estimate = routeBudgetEstimate(currentRoute());
+  const calculator = document.querySelector("#budgetCalculator");
+  calculator.innerHTML = `
+    <div class="budget-head">
+      <div>
+        <p class="eyebrow">Budget calculator</p>
+        <h3>${currentRoute().name}</h3>
+      </div>
+      <div class="budget-total">
+        <span>Estimated total</span>
+        <strong>${formatEuro(estimate.total)} pp</strong>
+        <em>${formatEuro(estimate.groupTotal)} group</em>
+      </div>
+    </div>
+    <div class="budget-breakdown" aria-label="Budget breakdown">
+      ${budgetBreakdownRow("Hostels", estimate.accommodation)}
+      ${budgetBreakdownRow("Transport", estimate.transport)}
+      ${budgetBreakdownRow("Food", estimate.food)}
+      ${budgetBreakdownRow("Nightlife", estimate.nightlife)}
+      ${budgetBreakdownRow("Activities", estimate.activities)}
+      ${budgetBreakdownRow("Buffer", estimate.buffer)}
+    </div>
+    <div class="budget-controls">
+      ${segmentedControl("Accommodation", "accommodation", [
+        ["budget", "Cheapest beds"],
+        ["balanced", "Balanced"],
+        ["better", "Better hostels"],
+      ])}
+      ${segmentedControl("Transport", "transport", [
+        ["coach", "Coach"],
+        ["train", "Train mix"],
+        ["car", "Cars/transfers"],
+      ])}
+      ${rangeControl("Food per day", "foodDaily", 18, 50, 1, "€")}
+      ${rangeControl("Night out spend", "nightlifeSpend", 0, 45, 1, "€")}
+      ${rangeControl("Activities fund", "activityFund", 0, 180, 5, "€")}
+      ${rangeControl("Safety buffer", "bufferPercent", 0, 25, 1, "%")}
+    </div>
+  `;
+
+  calculator.querySelectorAll("[data-budget-setting]").forEach((button) => {
     button.addEventListener("click", () => {
-      selectedRouteId = button.dataset.route;
-      selectedCityId = currentRoute().stops[0].cityId;
-      renderRouteChoices();
-      renderRouteCard();
-      renderItinerary();
-      renderCity();
-      renderTransport();
-      drawRoute(true);
+      budgetSettings[button.dataset.budgetSetting] = button.dataset.value;
+      renderDecisionTools();
     });
   });
+
+  calculator.querySelectorAll("[data-budget-range]").forEach((input) => {
+    input.addEventListener("input", () => {
+      budgetSettings[input.dataset.budgetRange] = Number(input.value);
+      renderDecisionTools();
+    });
+  });
+}
+
+function budgetBreakdownRow(label, value) {
+  return `
+    <div>
+      <span>${label}</span>
+      <strong>${formatEuro(value)}</strong>
+    </div>
+  `;
+}
+
+function segmentedControl(label, key, options) {
+  return `
+    <fieldset class="control-group">
+      <legend>${label}</legend>
+      <div class="segment-row">
+        ${options
+          .map(
+            ([value, text]) => `
+              <button class="segment-button ${budgetSettings[key] === value ? "active" : ""}" type="button" data-budget-setting="${key}" data-value="${value}">
+                ${text}
+              </button>
+            `,
+          )
+          .join("")}
+      </div>
+    </fieldset>
+  `;
+}
+
+function rangeControl(label, key, min, max, step, unit) {
+  const value = budgetSettings[key];
+  const display = unit === "%" ? `${value}%` : `${unit}${value}`;
+  return `
+    <label class="range-control">
+      <span>${label}<strong>${display}</strong></span>
+      <input type="range" min="${min}" max="${max}" step="${step}" value="${value}" data-budget-range="${key}" />
+    </label>
+  `;
+}
+
+function routeBudgetEstimate(route) {
+  const profile = routeBudgetProfiles[route.id];
+  const accommodation = routeAccommodationCost(route);
+  const transport = profile.transport[budgetSettings.transport].cost;
+  const food = budgetSettings.foodDaily * 15;
+  const nightlife = budgetSettings.nightlifeSpend * profile.nightOuts;
+  const activities = budgetSettings.activityFund;
+  const subtotal = accommodation + transport + food + nightlife + activities;
+  const buffer = subtotal * (budgetSettings.bufferPercent / 100);
+  const total = Math.round(subtotal + buffer);
+
+  return {
+    route,
+    accommodation: Math.round(accommodation),
+    transport,
+    food,
+    nightlife,
+    activities,
+    buffer: Math.round(buffer),
+    total,
+    groupTotal: total * 10,
+    transportHours: profile.transport[budgetSettings.transport].hours,
+  };
+}
+
+function routeAccommodationCost(route) {
+  return route.stops.reduce((total, stopItem) => {
+    return total + nightlyAccommodationRate(stopItem.cityId, budgetSettings.accommodation) * stopItem.nights;
+  }, 0);
+}
+
+function nightlyAccommodationRate(cityId, mode) {
+  const cityItem = cities[cityId];
+  const stays = cityItem.places.filter((item) => item.category === "stay");
+  const priced = stays
+    .map((item) => {
+      const detail = stayDetailFor(item);
+      return { item, detail, price: nightlyPrice(detail.price) };
+    })
+    .filter((entry) => entry.price !== null)
+    .sort((a, b) => a.price - b.price);
+  const fallback = fallbackStayRates[cityId]?.[mode] || 30;
+  let baseRate = fallback;
+
+  if (priced.length) {
+    if (mode === "budget") {
+      baseRate = priced[0].price;
+    } else if (mode === "balanced") {
+      const okPriced = priced.filter((entry) => entry.detail.tone === "ok");
+      baseRate = okPriced[0]?.price || priced[Math.floor(priced.length / 2)].price;
+    } else {
+      baseRate = priced[priced.length - 1].price;
+    }
+  }
+
+  return Math.round(baseRate * bookingPressureMultiplier(cityId));
+}
+
+function bookingPressureMultiplier(cityId) {
+  if (cityId === "sansebastian") return 1.25;
+  if (cityId === "biarritz") return 1.15;
+  if (cityId === "nazare" || cityId === "vigo") return 1.1;
+  return 1;
+}
+
+function formatEuro(value) {
+  return `€${Math.round(value).toLocaleString("en-GB")}`;
 }
 
 function renderRouteCard() {
@@ -620,7 +914,7 @@ function renderCity() {
   const stopItem = currentStop();
   const cityItem = cities[selectedCityId];
 
-  document.querySelector("#cityDates").textContent = `${stopItem.dates} | ${stopItem.nights} nights`;
+  document.querySelector("#cityDates").textContent = `${stopItem.dates} | ${nightCount(stopItem.nights)}`;
   document.querySelector("#cityName").textContent = cityItem.name;
   document.querySelector("#citySummary").textContent = cityItem.summary;
   document.querySelector("#cityArea").textContent = cityItem.area;
