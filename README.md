@@ -8,7 +8,7 @@ The demo includes:
 - route comparison dashboard with cost, travel-time, risk and vibe scores
 - interactive budget calculator for hostel level, transport mode, food, nightlife, activities and buffer
 - day-by-day itinerary for the selected route
-- persistent booking checklist with urgency labels and booking links
+- slide-out booking checklist with urgency labels, booking links and persistent checkboxes
 - transport notes by leg
 - date-aware accommodation cards with public availability signals, rough hostel costs and exact-date check links
 - food, nightlife and activity shortlists

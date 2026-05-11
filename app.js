@@ -553,6 +553,7 @@ let budgetSettings = {
 };
 const checklistStorageKey = "lisbonNorthboundChecklistV1";
 let checkedChecklistItems = loadChecklistState();
+let isChecklistOpen = false;
 const placeMarkers = new Map();
 
 function city(name, country, lat, lng, zoom, summary, area, booking, places) {
@@ -922,6 +923,7 @@ function renderOperations() {
 function renderDailyPlanner() {
   const route = currentRoute();
   const days = routeDailyPlan(route);
+  const checklist = currentChecklistSummary();
   const planner = document.querySelector("#dailyPlanner");
   planner.innerHTML = `
     <div class="operations-head">
@@ -929,7 +931,12 @@ function renderDailyPlanner() {
         <p class="eyebrow">Day-by-day</p>
         <h3>Daily itinerary</h3>
       </div>
-      <span class="operations-chip">${days.length} days | ${route.stops.length} bases</span>
+      <div class="operations-actions">
+        <span class="operations-chip">${days.length} days | ${route.stops.length} bases</span>
+        <button id="openChecklist" class="checklist-trigger" type="button" aria-controls="checklistDrawer" aria-expanded="${isChecklistOpen}">
+          Checklist <span>${checklist.doneCount}/${checklist.items.length}</span>
+        </button>
+      </div>
     </div>
     <div class="day-timeline">
       ${days.map((day) => renderDayCard(day)).join("")}
@@ -948,6 +955,8 @@ function renderDailyPlanner() {
       openDay();
     });
   });
+
+  planner.querySelector("#openChecklist").addEventListener("click", openChecklistDrawer);
 }
 
 function renderDayCard(day) {
@@ -1061,18 +1070,19 @@ function pickPlace(cityId, category, index) {
 }
 
 function renderBookingChecklist() {
-  const checklist = routeChecklist(currentRoute());
-  const doneCount = checklist.filter((item) => checkedChecklistItems[item.id]).length;
-  const percent = checklist.length ? Math.round((doneCount / checklist.length) * 100) : 0;
+  const { items: checklist, doneCount, percent } = currentChecklistSummary();
   const panel = document.querySelector("#bookingChecklist");
 
   panel.innerHTML = `
-    <div class="operations-head checklist-head">
+    <div class="operations-head drawer-head">
       <div>
         <p class="eyebrow">Booking checklist</p>
         <h3>What to lock in</h3>
       </div>
-      <span class="operations-chip">${doneCount}/${checklist.length} done</span>
+      <div class="operations-actions">
+        <span class="operations-chip">${doneCount}/${checklist.length} done</span>
+        <button id="closeChecklist" class="drawer-close" type="button" aria-label="Close checklist">Close</button>
+      </div>
     </div>
     <div class="checklist-progress" aria-label="Checklist progress">
       <span style="width:${percent}%"></span>
@@ -1086,9 +1096,39 @@ function renderBookingChecklist() {
     input.addEventListener("change", () => {
       checkedChecklistItems[input.dataset.checklistId] = input.checked;
       saveChecklistState();
-      renderBookingChecklist();
+      renderOperations();
     });
   });
+  panel.querySelector("#closeChecklist").addEventListener("click", closeChecklistDrawer);
+  syncChecklistDrawer();
+}
+
+function currentChecklistSummary() {
+  const items = routeChecklist(currentRoute());
+  const doneCount = items.filter((item) => checkedChecklistItems[item.id]).length;
+  const percent = items.length ? Math.round((doneCount / items.length) * 100) : 0;
+  return { items, doneCount, percent };
+}
+
+function openChecklistDrawer() {
+  isChecklistOpen = true;
+  syncChecklistDrawer();
+}
+
+function closeChecklistDrawer() {
+  isChecklistOpen = false;
+  syncChecklistDrawer();
+}
+
+function syncChecklistDrawer() {
+  const drawer = document.querySelector("#checklistDrawer");
+  const backdrop = document.querySelector("#checklistBackdrop");
+  const trigger = document.querySelector("#openChecklist");
+  drawer.classList.toggle("open", isChecklistOpen);
+  drawer.setAttribute("aria-hidden", String(!isChecklistOpen));
+  if (trigger) trigger.setAttribute("aria-expanded", String(isChecklistOpen));
+  backdrop.hidden = !isChecklistOpen;
+  document.body.classList.toggle("checklist-open", isChecklistOpen);
 }
 
 function renderChecklistItem(item) {
@@ -1657,4 +1697,8 @@ function zoomToSelectedCity() {
 document.addEventListener("DOMContentLoaded", () => {
   initMap();
   document.querySelector("#fitRoute").addEventListener("click", () => drawRoute(true));
+  document.querySelector("#checklistBackdrop").addEventListener("click", closeChecklistDrawer);
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape" && isChecklistOpen) closeChecklistDrawer();
+  });
 });
