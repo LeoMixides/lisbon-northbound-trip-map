@@ -391,10 +391,67 @@ const routes = [
   },
 ];
 
+const hostelworldCityUrls = {
+  lisbon: "https://www.hostelworld.com/hostels/europe/portugal/lisbon/",
+  ericeira: "https://www.hostelworld.com/hostels/europe/portugal/ericeira/",
+  peniche: "https://www.hostelworld.com/hostels/europe/portugal/peniche/",
+  nazare: "https://www.hostelworld.com/hostels/europe/portugal/nazare/",
+  coimbra: "https://www.hostelworld.com/hostels/europe/portugal/coimbra/",
+  porto: "https://www.hostelworld.com/hostels/europe/portugal/porto/",
+  vigo: "https://www.hostelworld.com/hostels/europe/spain/vigo/",
+  santiago: "https://www.hostelworld.com/hostels/europe/spain/santiago-de-compostela/",
+  bilbao: "https://www.hostelworld.com/hostels/europe/spain/bilbao/",
+  biarritz: "https://www.hostelworld.com/hostels/europe/france/biarritz/",
+  sansebastian: "https://www.hostelworld.com/hostels/europe/spain/san-sebastian/",
+};
+
+const stayDetails = {
+  "home-lisbon": stay("Listed", "watch", "Dorms from €44.89", "140+ staying on Hostelworld's Lisbon page.", "Great location and dinners, but pricey for a dorm block. Ask direct for ten beds before relying on split bookings."),
+  "yes-lisbon": stay("Listed", "ok", "Dorms from €20.00", "149+ staying on Hostelworld's Lisbon page.", "Best Lisbon value/social balance from the visible options. Strong first enquiry for 1-4 Aug."),
+  independente: stay("Listed", "ok", "Dorms from €16.00", "32+ staying on Hostelworld's Lisbon page.", "Good Bairro Alto location. Less obviously backpacker-social than Yes/Home but useful if price matters."),
+  "surfers-den": stay("Listed", "watch", "Dorms from €20.00", "4+ staying on Hostelworld's Ericeira page.", "Good surf-hostel fit, but the public signal is small. Check whether ten beds exist before committing."),
+  "wot-ericeira": stay("Listed", "ok", "Dorms from €13.00", "57+ staying on Hostelworld's Ericeira page.", "Best group-capacity signal in Ericeira. Make this the first exact-date check."),
+  laneez: stay("Direct check", "watch", "No public rate found in this pass", "Not visible in the Hostelworld city pricing pass.", "Sea-view surf-house option, likely pricier. Treat as a direct enquiry, not the budget default."),
+  "baleal-surf-camp": stay("Direct package", "watch", "Direct surf-stay pricing", "Official site lists a hostel 100m from the beach with dorms, kitchen, linen and free WiFi.", "Best surf logistics in Baleal. Directly ask for a ten-person dorm/surf package for 6-8 Aug."),
+  "captains-log": stay("Direct check", "watch", "No public rate found in this pass", "Official site confirms it is a Baleal beach hostel/surf lodge.", "Good location, but no reliable public price/capacity signal. Use as a second direct enquiry."),
+  "ferrel-surf-house": stay("Poor date fit", "risk", "Packages from 5 nights", "Official site says surf-and-stay packages start from 5 nights.", "Not ideal for the current 2-night Peniche stop unless you extend the surf block."),
+  "nazare-hostel": stay("Listed", "risk", "Dorms from €25.00", "Hostelworld lists only 3 Nazare hostels; this one is 150m from the beach.", "Book early. Nazare has thin hostel supply and ten dorm beds can disappear quickly."),
+  "hi-nazare": stay("Direct youth hostel", "watch", "Check direct", "Not visible in the Hostelworld Nazare pricing pass.", "Useful fallback if private hostels fill. Check Pousadas de Juventude direct for group beds."),
+  "lab-hostel": stay("Small-capacity check", "risk", "Check direct", "Hostelworld property text notes three 6-bed dorms plus family/double rooms.", "There may be enough dorm beds in theory, but a group of ten would take most of the hostel."),
+  serenata: stay("Listed", "watch", "Dorms from €19.00", "6+ staying on Hostelworld's Coimbra page.", "Best central Coimbra fit, but exact ten-bed availability needs checking."),
+  "hi-coimbra": stay("Listed", "ok", "Dorms from €12.00", "4+ staying on Hostelworld's Coimbra page; free breakfast listed.", "Cheapest Coimbra fallback. Less central, but practical for one night."),
+  "ctw-coimbra": stay("Fallback check", "watch", "No public rate found in this pass", "Not visible in the Hostelworld Coimbra pricing pass.", "Keep as a station-side fallback, but price it against Coimbra Portagem/HI before booking."),
+  passenger: stay("Listed", "ok", "Dorms from €22.50", "97+ staying on Hostelworld's Porto page; free breakfast listed.", "Best transport location and strong capacity signal. Very sensible for Porto."),
+  "gallery-hostel": stay("Listed", "ok", "Dorms from €25.88", "23+ staying on Hostelworld's Porto page.", "Good quality/Cedofeita option. Strong but pricier than Onefam/Nice Way."),
+  "onefam-ribeira": stay("Listed", "ok", "Dorms from €14.00", "58+ staying on Hostelworld's Porto page; age 18-39.", "Best social value if everyone is within the age rule and wants organised nights."),
+  "kaps-vigo": stay("Direct/hotel check", "watch", "Official listing from €55/night", "Public official listing surfaced with from-pricing, but not a ten-bed dorm signal.", "Vigo hostel supply is thin. Check this against Nautico Vigo and budget hotels."),
+  "hostel-celta": stay("Direct check", "watch", "No public rate found in this pass", "Not visible in the Hostelworld Vigo pricing pass.", "Use as a practical central fallback only after checking exact availability."),
+  "casco-vello-base": stay("Area target", "risk", "Nautico Vigo dorms from €30.00", "Hostelworld lists only 3 Vigo hostels; Nautico Vigo shows 3+ staying.", "Do not leave Vigo late. For ten people, price hostels against simple central budget hotels."),
+  "seminario-menor": stay("Listed", "ok", "Dorms from €22.00", "Hostelworld lists Hostal Seminario Menor with private and dorm availability from pricing.", "Large albergue-style option and the safest group-capacity bet in Santiago."),
+  "last-stamp": stay("Listed", "watch", "Dorms from €21.00", "The Last Stamp is listed 100m from the cathedral.", "Best centrality, but check reviews/current condition and ten-bed availability carefully."),
+  "loop-inn": stay("Listed", "ok", "Dorms from €18.07", "Featured on Hostelworld's Santiago page.", "Good practical group option just north of the centre."),
+  latroupe: stay("Listed", "ok", "Dorms from €22.68", "Hostelworld lists Latroupe with 19 events and central location.", "Best Bilbao group/social balance; good finish option if San Sebastian beds are brutal."),
+  quartier: stay("Listed", "ok", "Dorms from €17.10", "Hostelworld lists Quartier in Casco Viejo.", "Cheaper old-town option. Check their booking instructions and late check-in details."),
+  poshtel: stay("Listed", "watch", "Dorms from €30.33", "Hostelworld lists Poshtel near the Guggenheim.", "Cooler but pricier; use if Latroupe/Quartier do not have ten beds."),
+  "nami-house": stay("Listed", "risk", "Dorms from €41.80", "8+ staying on Hostelworld's Biarritz page; no privates shown.", "Excellent surf-hostel vibe, but likely tight/expensive for ten in August."),
+  "surf-hostel-biarritz": stay("Listed", "risk", "Dorms from €46.00", "9+ staying on Hostelworld's Biarritz page; free breakfast listed.", "Good surf option, but this is not a budget stop. Confirm exact beds before choosing Route 3."),
+  "garden-utopy": stay("Listed", "watch", "Dorms from €15.50", "3+ staying on Hostelworld's Biarritz page.", "Cheapest visible Biarritz-area option; check location and transport before booking."),
+  koba: stay("Listed", "risk", "Dorms from €26.25", "Hostelworld San Sebastian page lists Koba in Gros.", "Best fit if available, but Semana Grande makes this a book-now item."),
+  "room-city": stay("Listed", "risk", "Dorms from €37.95", "Hostelworld lists A Room In The City near the centre.", "Great central option, likely expensive during festival dates."),
+  balea: stay("Listed", "watch", "Dorms from €34.50", "Hostelworld lists Balea with dorms only.", "Budget fallback outside the core; useful if central beds are gone."),
+};
+
 const sources = [
   ["San Sebastian Semana Grande 2026", "https://sansebastianturismoa.eus/en/agenda/semana-grande-2026/", "Official 8-15 August 2026 festival listing."],
   ["San Sebastian pintxos", "https://sansebastianturismoa.eus/en/gastronomy/going-for-pintxos/", "Official pintxo context and food areas."],
   ["San Sebastian nightlife", "https://www.sansebastianturismoa.eus/en/to-do/plans-in-san-sebastian/nightlife", "Official nightlife area guidance."],
+  ["Hostelworld Lisbon hostels", "https://www.hostelworld.com/hostels/europe/portugal/lisbon/", "Public hostel from-prices and booking signals checked 11 May 2026."],
+  ["Hostelworld Portugal route hostels", "https://www.hostelworld.com/hostels/europe/portugal/porto/", "Cross-check for Ericeira, Peniche, Nazare, Coimbra and Porto hostel pricing."],
+  ["Hostelworld Spain/Basque hostels", "https://www.hostelworld.com/hostels/europe/spain/san-sebastian/", "Cross-check for Vigo, Santiago, Bilbao and San Sebastian hostel pricing."],
+  ["Hostelworld Biarritz hostels", "https://www.hostelworld.com/hostels/europe/france/biarritz/", "Biarritz and Anglet surf-hostel pricing check."],
+  ["Baleal Surf Camp hostels", "https://www.balealsurfcamp.com/accommodation/hostels/", "Direct surf-hostel facilities and group enquiry context."],
+  ["Captain's Log House", "https://captainsloghouse.com/", "Direct Baleal hostel/surf-lodge fallback."],
+  ["Ferrel Surf House prices", "https://www.ferrelsurfhouse.com/prices", "Direct package pricing and minimum-stay context."],
   ["ALSA Porto-San Sebastian", "https://www.alsa.com/en/coach/porto-san-sebastian", "Long coach route to check when tickets open."],
   ["FlixBus Porto-San Sebastian", "https://www.flixbus.com/bus-routes/bus-porto-san-sebastian", "Budget long-coach cross-check."],
   ["CP - Comboios de Portugal", "https://www.cp.pt/", "Portugal train planning."],
@@ -432,6 +489,10 @@ function city(name, country, lat, lng, zoom, summary, area, booking, places) {
 
 function p(id, name, category, lat, lng, note) {
   return { id, name, category, lat, lng, note };
+}
+
+function stay(status, tone, price, signal, groupFit) {
+  return { status, tone, price, signal, groupFit };
 }
 
 function stop(cityId, dates, nights) {
@@ -565,8 +626,10 @@ function renderCity() {
   document.querySelector("#cityArea").textContent = cityItem.area;
   document.querySelector("#cityBooking").textContent = cityItem.booking;
   document.querySelector("#cityMaps").href = mapsUrl(null, cityItem);
+  renderStayPlanner(cityItem, stopItem);
 
   const sections = sectionLabels
+    .filter(([category]) => category !== "stay")
     .map(([category, label]) => {
       const items = cityItem.places.filter((item) => {
         if (selectedCategory !== "all" && selectedCategory !== category) return false;
@@ -607,6 +670,173 @@ function renderPlaceCard(item, cityItem) {
       <p>${item.note}</p>
     </article>
   `;
+}
+
+function renderStayPlanner(cityItem, stopItem) {
+  const planner = document.querySelector("#stayPlanner");
+  const stays = cityItem.places.filter((item) => item.category === "stay");
+
+  if (selectedCategory !== "all" && selectedCategory !== "stay") {
+    planner.innerHTML = "";
+    return;
+  }
+
+  const exactUrl = hostelworldExactUrl(selectedCityId, stopItem);
+  const insight = accommodationInsight(stays);
+  planner.innerHTML = `
+    <section class="availability-card" aria-label="Accommodation availability">
+      <div class="section-head">
+        <p class="eyebrow">Accommodation check</p>
+        <h3>Hostels for ${stopItem.dates}</h3>
+      </div>
+      <div class="availability-kpis" aria-label="Accommodation summary">
+        <div>
+          <span>Group need</span>
+          <strong>${nightCount(stopItem.nights)} / 10 beds</strong>
+        </div>
+        <div>
+          <span>Best visible rate</span>
+          <strong>${insight.bestRate}</strong>
+        </div>
+        <div>
+          <span>First check</span>
+          <strong>${insight.firstCheck}</strong>
+        </div>
+      </div>
+      <p class="availability-note">
+        Checked 11 May 2026. Prices are public "from" rates, not locked quotes for ten people.
+        ${insight.statusRead}. Use the exact-date link before booking because August inventory moves quickly.
+      </p>
+      <div class="stay-grid">
+        ${stays.map((item) => renderStayOption(item, cityItem, stopItem, exactUrl)).join("")}
+      </div>
+    </section>
+  `;
+
+  planner.querySelectorAll(".stay-option").forEach((card) => {
+    card.addEventListener("click", (event) => {
+      if (event.target.closest("a")) return;
+      const marker = placeMarkers.get(card.dataset.place);
+      if (!marker) return;
+      map.flyTo(marker.getLatLng(), Math.max(map.getZoom(), 15), { duration: 0.45 });
+      marker.openPopup();
+    });
+  });
+}
+
+function accommodationInsight(stays) {
+  const detailed = stays.map((item) => ({ item, details: stayDetailFor(item) }));
+  const priced = detailed
+    .map((entry) => ({ ...entry, price: nightlyPrice(entry.details.price) }))
+    .filter((entry) => entry.price !== null)
+    .sort((a, b) => a.price - b.price);
+  const firstCheck =
+    detailed.find((entry) => entry.details.tone === "ok") ||
+    detailed.find((entry) => entry.details.tone === "watch") ||
+    detailed[0];
+  const toneCounts = detailed.reduce(
+    (counts, entry) => {
+      counts[entry.details.tone] = (counts[entry.details.tone] || 0) + 1;
+      return counts;
+    },
+    { ok: 0, watch: 0, risk: 0 },
+  );
+
+  return {
+    bestRate: priced.length ? `${priced[0].item.name} from €${priced[0].price.toFixed(priced[0].price % 1 ? 2 : 0)}` : "Needs live quote",
+    firstCheck: firstCheck ? firstCheck.item.name : "Compare direct",
+    statusRead: `${countLabel(toneCounts.ok, "stronger signal")}, ${countLabel(toneCounts.watch, "check-direct signal")}, ${countLabel(toneCounts.risk, "high-risk signal")} for this stop`,
+  };
+}
+
+function renderStayOption(item, cityItem, stopItem, exactUrl) {
+  const details = stayDetailFor(item);
+  const totalHint = estimateStayTotal(details.price, stopItem.nights);
+  return `
+    <article class="stay-option" data-place="${item.id}">
+      <div class="stay-option-top">
+        <div>
+          <span class="status-pill ${details.tone}">${details.status}</span>
+          <h4>${item.name}</h4>
+        </div>
+        <strong>${details.price}</strong>
+      </div>
+      <dl class="stay-facts">
+        <div>
+          <dt>Availability signal</dt>
+          <dd>${details.signal}</dd>
+        </div>
+        <div>
+          <dt>Group fit</dt>
+          <dd>${details.groupFit}</dd>
+        </div>
+        <div>
+          <dt>Rough stay cost</dt>
+          <dd>${totalHint}</dd>
+        </div>
+      </dl>
+      <div class="stay-actions">
+        <a href="${exactUrl}" target="_blank" rel="noreferrer">Check 10 beds</a>
+        <a href="${mapsUrl(item, cityItem)}" target="_blank" rel="noreferrer">Map</a>
+      </div>
+    </article>
+  `;
+}
+
+function stayDetailFor(item) {
+  return stayDetails[item.id] || stay("Check direct", "watch", "No public rate found", "No public availability signal found in this pass.", "Contact direct before relying on it for a group of ten.");
+}
+
+function estimateStayTotal(priceText, nights) {
+  const perNight = nightlyPrice(priceText);
+  if (perNight === null) return "Needs live quote";
+  const perPerson = Math.round(perNight * nights);
+  const group = Math.round(perNight * nights * 10);
+  return `~€${perPerson} pp / ~€${group} group before fees/taxes`;
+}
+
+function nightlyPrice(priceText) {
+  const match = priceText.match(/€([0-9]+(?:\.[0-9]+)?)/);
+  return match ? Number(match[1]) : null;
+}
+
+function nightCount(nights) {
+  return `${nights} ${nights === 1 ? "night" : "nights"}`;
+}
+
+function countLabel(count, singular) {
+  return `${count} ${count === 1 ? singular : `${singular}s`}`;
+}
+
+function hostelworldExactUrl(cityId, stopItem) {
+  const base = hostelworldCityUrls[cityId] || "https://www.hostelworld.com/";
+  const [dateFrom, dateTo] = datesToIso(stopItem.dates);
+  return `${base}?dateFrom=${dateFrom}&dateTo=${dateTo}&guests=10`;
+}
+
+function datesToIso(label) {
+  const [start, end] = label.split(" - ");
+  return [datePartToIso(start), datePartToIso(end)];
+}
+
+function datePartToIso(part) {
+  const months = {
+    Jan: "01",
+    Feb: "02",
+    Mar: "03",
+    Apr: "04",
+    May: "05",
+    Jun: "06",
+    Jul: "07",
+    Aug: "08",
+    Sep: "09",
+    Oct: "10",
+    Nov: "11",
+    Dec: "12",
+  };
+  const match = part.match(/(\d{1,2})\s+([A-Za-z]{3})/);
+  if (!match) return "2026-08-01";
+  return `2026-${months[match[2]]}-${match[1].padStart(2, "0")}`;
 }
 
 function renderCategoryFilters() {

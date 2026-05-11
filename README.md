@@ -6,7 +6,8 @@ The demo includes:
 
 - three route options
 - transport notes by leg
-- accommodation, food, nightlife and activity shortlists
+- date-aware accommodation cards with public availability signals, rough hostel costs and exact-date check links
+- food, nightlife and activity shortlists
 - clickable city and place pins
 - Google Maps search links for every listed place
 
