@@ -13,6 +13,7 @@ The demo includes:
 - date-aware accommodation cards with public availability signals, rough hostel costs and exact-date check links
 - food, nightlife and activity shortlists
 - clickable city and place pins
+- clickable route city labels and map place pins that jump back to the full city info
 - Google Maps search links for every listed place
 
 It is a static site built with plain HTML, CSS, JavaScript and Leaflet/OpenStreetMap.

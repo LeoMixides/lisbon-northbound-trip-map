@@ -606,6 +606,7 @@ function initMap() {
   }).addTo(map);
 
   countryLayer = L.geoJSON(baseCountries, {
+    interactive: false,
     style: (feature) => ({
       color: feature.properties.name === "Portugal" ? "rgba(11, 75, 85, 0.55)" : "rgba(23, 33, 31, 0.16)",
       fillColor: "transparent",
@@ -1616,12 +1617,12 @@ function drawRoute(fit) {
   route.stops.forEach((item, index) => {
     const cityItem = cities[item.cityId];
     const marker = L.marker([cityItem.lat, cityItem.lng], {
-      icon: cityMarkerIcon(index + 1, item.cityId === selectedCityId),
+      icon: cityMarkerIcon(index + 1, cityItem.name, item.cityId === selectedCityId),
     })
       .addTo(cityLayer)
       .bindPopup(`<strong>${index + 1}. ${cityItem.name}</strong><br>${item.dates}<br>${item.nights} nights`);
 
-    marker.on("click", () => selectCity(item.cityId, true));
+    marker.on("click", () => selectCity(item.cityId, true, { resetCategory: true }));
   });
 
   drawPlaces();
@@ -1642,6 +1643,7 @@ function drawPlaces() {
       .bindPopup(
         `<strong>${item.name}</strong><br><span>${categoryName(item.category)}</span><br>${item.note}<br><a href="${mapsUrl(item, cityItem)}" target="_blank" rel="noreferrer">Open in Google Maps</a>`,
       );
+    marker.on("click", () => focusPlaceFromMap(item));
     placeMarkers.set(item.id, marker);
   });
 }
@@ -1651,11 +1653,11 @@ function filteredPlaces(cityItem) {
   return cityItem.places.filter((item) => item.category === selectedCategory);
 }
 
-function cityMarkerIcon(number, isSelected) {
+function cityMarkerIcon(number, cityName, isSelected) {
   return L.divIcon({
     className: `city-pin ${isSelected ? "selected" : ""}`,
-    html: `<span>${number}</span>`,
-    iconSize: [38, 38],
+    html: `<span>${number}</span><strong>${cityName}</strong>`,
+    iconSize: null,
     iconAnchor: [19, 19],
     popupAnchor: [0, -18],
   });
@@ -1671,8 +1673,38 @@ function placeMarkerStyle(category) {
   };
 }
 
-function selectCity(cityId, shouldZoom) {
+function focusPlaceFromMap(placeItem) {
+  selectedCategory = "all";
+  renderCategoryFilters();
+  renderCity();
+  drawPlaces();
+
+  const marker = placeMarkers.get(placeItem.id);
+  if (marker) {
+    map.flyTo(marker.getLatLng(), Math.max(map.getZoom(), 15), { duration: 0.45 });
+    marker.openPopup();
+  }
+
+  focusPlaceDetail(placeItem.id);
+}
+
+function focusPlaceDetail(placeId) {
+  requestAnimationFrame(() => {
+    const target = document.querySelector(`[data-place="${placeId}"]`);
+    if (!target) {
+      document.querySelector(".city-card").scrollIntoView({ behavior: "smooth", block: "start" });
+      return;
+    }
+    target.classList.add("map-focused");
+    target.scrollIntoView({ behavior: "smooth", block: "center" });
+    window.setTimeout(() => target.classList.remove("map-focused"), 1800);
+  });
+}
+
+function selectCity(cityId, shouldZoom, options = {}) {
   selectedCityId = cityId;
+  if (options.resetCategory) selectedCategory = "all";
+  renderCategoryFilters();
   renderItinerary();
   renderOperations();
   renderCity();
