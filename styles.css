@@ -216,6 +216,7 @@ a {
 }
 
 .decision-card,
+.operations-card,
 .route-card,
 .city-card,
 .transport-card,
@@ -231,7 +232,8 @@ a {
 .route-card-top,
 .city-head,
 .decision-head,
-.budget-head {
+.budget-head,
+.operations-head {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
@@ -242,7 +244,8 @@ a {
 .route-card h3,
 .city-card h3,
 .section-head h3,
-.decision-card h3 {
+.decision-card h3,
+.operations-card h3 {
   margin: 3px 0 0;
   font-size: 1.45rem;
   line-height: 1.05;
@@ -533,6 +536,240 @@ a {
 .range-control input {
   width: 100%;
   accent-color: var(--sea);
+}
+
+.operations-card {
+  display: grid;
+  gap: 16px;
+}
+
+.operations-chip {
+  display: inline-flex;
+  align-items: center;
+  min-height: 30px;
+  padding: 6px 9px;
+  color: var(--sea-dark);
+  font-size: 0.74rem;
+  font-weight: 900;
+  white-space: nowrap;
+  background: rgba(13, 113, 128, 0.1);
+  border-radius: 8px;
+}
+
+.day-timeline {
+  display: grid;
+  gap: 8px;
+}
+
+.day-card {
+  display: grid;
+  grid-template-columns: 58px 1fr;
+  gap: 10px;
+  padding: 10px;
+  background: rgba(246, 241, 232, 0.72);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.day-card.active {
+  background: #fffdf8;
+  border-color: rgba(13, 113, 128, 0.42);
+  box-shadow: 0 10px 22px rgba(13, 113, 128, 0.1);
+}
+
+.day-date {
+  display: grid;
+  place-items: center;
+  align-self: start;
+  min-height: 58px;
+  color: #fffdf8;
+  background: var(--sea);
+  border-radius: 8px;
+}
+
+.day-date span {
+  font-size: 0.68rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.day-date strong {
+  font-size: 0.9rem;
+  line-height: 1.05;
+  text-align: center;
+}
+
+.day-plan {
+  min-width: 0;
+}
+
+.day-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 7px;
+}
+
+.day-top strong {
+  min-width: 0;
+  font-size: 0.98rem;
+  line-height: 1.18;
+  text-align: right;
+}
+
+.day-pill {
+  display: inline-flex;
+  align-items: center;
+  min-height: 22px;
+  padding: 3px 7px;
+  color: #fffdf8;
+  font-size: 0.68rem;
+  font-weight: 900;
+  border-radius: 999px;
+}
+
+.day-pill.arrival,
+.day-pill.local {
+  background: var(--green);
+}
+
+.day-pill.travel {
+  background: var(--gold);
+}
+
+.day-pill.final {
+  background: var(--coral);
+}
+
+.day-plan dl {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+}
+
+.day-plan dl div {
+  display: grid;
+  grid-template-columns: 72px 1fr;
+  gap: 8px;
+}
+
+.day-plan dt {
+  color: var(--sea-dark);
+  font-size: 0.66rem;
+  font-weight: 900;
+  letter-spacing: 0.07em;
+  line-height: 1.25;
+  text-transform: uppercase;
+}
+
+.day-plan dd {
+  min-width: 0;
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.84rem;
+  line-height: 1.36;
+}
+
+.checklist-head {
+  padding-top: 14px;
+  border-top: 1px solid var(--line);
+}
+
+.checklist-progress {
+  height: 8px;
+  overflow: hidden;
+  background: rgba(13, 113, 128, 0.12);
+  border-radius: 999px;
+}
+
+.checklist-progress span {
+  display: block;
+  height: 100%;
+  background: var(--sea);
+  border-radius: inherit;
+}
+
+.checklist-list {
+  display: grid;
+  gap: 8px;
+}
+
+.check-item {
+  display: grid;
+  grid-template-columns: 24px 1fr;
+  gap: 9px;
+  align-items: start;
+  padding: 10px;
+  background: rgba(246, 241, 232, 0.72);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+}
+
+.check-item.done {
+  opacity: 0.62;
+}
+
+.check-item input {
+  width: 18px;
+  height: 18px;
+  margin: 2px 0 0;
+  accent-color: var(--sea);
+}
+
+.check-top {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 8px;
+  align-items: start;
+}
+
+.check-top strong {
+  min-width: 0;
+  font-size: 0.94rem;
+  line-height: 1.25;
+}
+
+.urgency {
+  display: inline-flex;
+  align-items: center;
+  min-height: 21px;
+  padding: 3px 7px;
+  color: #fffdf8;
+  font-size: 0.66rem;
+  font-weight: 900;
+  white-space: nowrap;
+  border-radius: 999px;
+}
+
+.urgency.urgent {
+  background: var(--coral);
+}
+
+.urgency.soon {
+  background: var(--gold);
+}
+
+.urgency.normal {
+  background: var(--green);
+}
+
+.check-item p {
+  margin: 5px 0 0;
+  color: var(--muted);
+  font-size: 0.84rem;
+  line-height: 1.38;
+}
+
+.check-item a {
+  display: inline-flex;
+  margin-top: 8px;
+  color: var(--sea-dark);
+  font-size: 0.76rem;
+  font-weight: 900;
+  text-decoration: none;
 }
 
 .route-copy,
@@ -1020,6 +1257,7 @@ a {
   .city-head,
   .decision-head,
   .budget-head,
+  .operations-head,
   .city-basics,
   .availability-card .section-head,
   .availability-kpis,
@@ -1047,6 +1285,28 @@ a {
   .metric-row,
   .segment-row {
     grid-template-columns: 1fr;
+  }
+
+  .day-card,
+  .day-plan dl div,
+  .check-item,
+  .check-top {
+    grid-template-columns: 1fr;
+  }
+
+  .day-date {
+    display: flex;
+    justify-content: space-between;
+    min-height: 0;
+    padding: 9px;
+  }
+
+  .day-top {
+    display: grid;
+  }
+
+  .day-top strong {
+    text-align: left;
   }
 
   .stay-option-top strong {

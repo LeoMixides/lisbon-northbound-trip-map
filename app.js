@@ -551,6 +551,8 @@ let budgetSettings = {
   activityFund: 90,
   bufferPercent: 10,
 };
+const checklistStorageKey = "lisbonNorthboundChecklistV1";
+let checkedChecklistItems = loadChecklistState();
 const placeMarkers = new Map();
 
 function city(name, country, lat, lng, zoom, summary, area, booking, places) {
@@ -624,6 +626,7 @@ function renderAll() {
   renderDecisionTools();
   renderRouteCard();
   renderItinerary();
+  renderOperations();
   renderCity();
   renderTransport();
   renderCategoryFilters();
@@ -656,6 +659,7 @@ function selectRoute(routeId) {
   renderDecisionTools();
   renderRouteCard();
   renderItinerary();
+  renderOperations();
   renderCity();
   renderTransport();
   drawRoute(true);
@@ -910,6 +914,329 @@ function renderItinerary() {
   });
 }
 
+function renderOperations() {
+  renderDailyPlanner();
+  renderBookingChecklist();
+}
+
+function renderDailyPlanner() {
+  const route = currentRoute();
+  const days = routeDailyPlan(route);
+  const planner = document.querySelector("#dailyPlanner");
+  planner.innerHTML = `
+    <div class="operations-head">
+      <div>
+        <p class="eyebrow">Day-by-day</p>
+        <h3>Daily itinerary</h3>
+      </div>
+      <span class="operations-chip">${days.length} days | ${route.stops.length} bases</span>
+    </div>
+    <div class="day-timeline">
+      ${days.map((day) => renderDayCard(day)).join("")}
+    </div>
+  `;
+
+  planner.querySelectorAll(".day-card").forEach((card) => {
+    const openDay = () => selectCity(card.dataset.city, true);
+    card.addEventListener("click", (event) => {
+      if (event.target.closest("a")) return;
+      openDay();
+    });
+    card.addEventListener("keydown", (event) => {
+      if (event.key !== "Enter" && event.key !== " ") return;
+      event.preventDefault();
+      openDay();
+    });
+  });
+}
+
+function renderDayCard(day) {
+  return `
+    <article class="day-card ${day.cityId === selectedCityId ? "active" : ""} ${day.final ? "final" : ""}" data-city="${day.cityId}" role="button" tabindex="0">
+      <div class="day-date">
+        <span>${day.weekday}</span>
+        <strong>${day.date}</strong>
+      </div>
+      <div class="day-plan">
+        <div class="day-top">
+          <span class="day-pill ${day.type}">${day.label}</span>
+          <strong>${day.cityName}</strong>
+        </div>
+        <dl>
+          <div>
+            <dt>Move</dt>
+            <dd>${day.move}</dd>
+          </div>
+          <div>
+            <dt>Do</dt>
+            <dd>${day.activity}</dd>
+          </div>
+          <div>
+            <dt>Eat / night</dt>
+            <dd>${day.foodNight}</dd>
+          </div>
+          <div>
+            <dt>Sleep</dt>
+            <dd>${day.sleep}</dd>
+          </div>
+        </dl>
+      </div>
+    </article>
+  `;
+}
+
+function routeDailyPlan(route) {
+  const days = [];
+
+  route.stops.forEach((stopItem, stopIndex) => {
+    const [startIso] = datesToIso(stopItem.dates);
+    for (let nightIndex = 0; nightIndex < stopItem.nights; nightIndex += 1) {
+      const iso = addDaysIso(startIso, nightIndex);
+      days.push(dayPlanForStop(route, stopItem, stopIndex, nightIndex, iso));
+    }
+  });
+
+  const lastStop = route.stops[route.stops.length - 1];
+  const [, finalIso] = datesToIso(lastStop.dates);
+  days.push(finalDayPlan(lastStop, finalIso));
+  return days;
+}
+
+function dayPlanForStop(route, stopItem, stopIndex, nightIndex, iso) {
+  const cityItem = cities[stopItem.cityId];
+  const dateParts = formatDateParts(iso);
+  const isTravelDay = nightIndex === 0 && stopIndex > 0;
+  const isStartDay = nightIndex === 0 && stopIndex === 0;
+  const activity = pickPlace(stopItem.cityId, "activity", nightIndex + stopIndex);
+  const food = pickPlace(stopItem.cityId, "eat", nightIndex);
+  const night = pickPlace(stopItem.cityId, "night", nightIndex);
+
+  return {
+    cityId: stopItem.cityId,
+    cityName: cityItem.name,
+    weekday: dateParts.weekday,
+    date: dateParts.date,
+    label: isStartDay ? "Arrival" : isTravelDay ? "Travel" : "Local",
+    type: isStartDay ? "arrival" : isTravelDay ? "travel" : "local",
+    move: dailyMoveText(route, stopIndex, nightIndex),
+    activity: activity ? activity.name : cityItem.summary,
+    foodNight: `${food ? food.name : "Cheap local dinner"} + ${night ? night.name : "low-key drinks"}`,
+    sleep: `${cityItem.name}, night ${nightIndex + 1} of ${stopItem.nights}`,
+    final: false,
+  };
+}
+
+function finalDayPlan(stopItem, iso) {
+  const cityItem = cities[stopItem.cityId];
+  const dateParts = formatDateParts(iso);
+  const food = pickPlace(stopItem.cityId, "eat", 0);
+  const activity = pickPlace(stopItem.cityId, "activity", 0);
+
+  return {
+    cityId: stopItem.cityId,
+    cityName: cityItem.name,
+    weekday: dateParts.weekday,
+    date: dateParts.date,
+    label: "Depart",
+    type: "final",
+    move: `Check out in ${cityItem.name}; keep bags central if flights or onward trains are later.`,
+    activity: activity ? `${activity.name} if departure timing allows` : "Recovery breakfast and onward travel",
+    foodNight: food ? `${food.name} before leaving` : "Final group meal if time allows",
+    sleep: "Trip ends",
+    final: true,
+  };
+}
+
+function dailyMoveText(route, stopIndex, nightIndex) {
+  if (stopIndex === 0 && nightIndex === 0) return "Arrive in Lisbon, check in, and keep the first night walkable.";
+  if (nightIndex > 0) return "No intercity travel. Keep the day local and avoid burning time on logistics.";
+  const legItem = route.transport[stopIndex - 1];
+  return legItem ? `${legItem.name}: ${legItem.pick}. ${legItem.detail}` : "Travel to the next base.";
+}
+
+function pickPlace(cityId, category, index) {
+  const items = cities[cityId].places.filter((item) => item.category === category);
+  if (!items.length) return null;
+  return items[index % items.length];
+}
+
+function renderBookingChecklist() {
+  const checklist = routeChecklist(currentRoute());
+  const doneCount = checklist.filter((item) => checkedChecklistItems[item.id]).length;
+  const percent = checklist.length ? Math.round((doneCount / checklist.length) * 100) : 0;
+  const panel = document.querySelector("#bookingChecklist");
+
+  panel.innerHTML = `
+    <div class="operations-head checklist-head">
+      <div>
+        <p class="eyebrow">Booking checklist</p>
+        <h3>What to lock in</h3>
+      </div>
+      <span class="operations-chip">${doneCount}/${checklist.length} done</span>
+    </div>
+    <div class="checklist-progress" aria-label="Checklist progress">
+      <span style="width:${percent}%"></span>
+    </div>
+    <div class="checklist-list">
+      ${checklist.map((item) => renderChecklistItem(item)).join("")}
+    </div>
+  `;
+
+  panel.querySelectorAll("[data-checklist-id]").forEach((input) => {
+    input.addEventListener("change", () => {
+      checkedChecklistItems[input.dataset.checklistId] = input.checked;
+      saveChecklistState();
+      renderBookingChecklist();
+    });
+  });
+}
+
+function renderChecklistItem(item) {
+  const checked = Boolean(checkedChecklistItems[item.id]);
+  return `
+    <article class="check-item ${checked ? "done" : ""}">
+      <input type="checkbox" data-checklist-id="${item.id}" aria-label="${item.title}" ${checked ? "checked" : ""} />
+      <div>
+        <div class="check-top">
+          <span class="urgency ${item.priority}">${item.priorityLabel}</span>
+          <strong>${item.title}</strong>
+        </div>
+        <p>${item.note}</p>
+        ${item.href ? `<a href="${item.href}" target="_blank" rel="noreferrer">${item.linkLabel || "Open link"}</a>` : ""}
+      </div>
+    </article>
+  `;
+}
+
+function routeChecklist(route) {
+  const items = [];
+
+  route.stops.forEach((stopItem) => {
+    const cityItem = cities[stopItem.cityId];
+    const priority = stayPriority(stopItem.cityId);
+    const insight = accommodationInsight(cityItem.places.filter((item) => item.category === "stay"));
+    items.push({
+      id: `${route.id}|stay|${stopItem.cityId}`,
+      priority: priority.key,
+      priorityLabel: priority.label,
+      title: `Book ${cityItem.name} beds`,
+      note: `${stopItem.dates} · ${nightCount(stopItem.nights)} · ${insight.firstCheck} is the first check.`,
+      href: hostelworldExactUrl(stopItem.cityId, stopItem),
+      linkLabel: "Check beds",
+    });
+  });
+
+  route.transport.forEach((legItem, index) => {
+    const priority = transportPriority(legItem);
+    items.push({
+      id: `${route.id}|transport|${index}`,
+      priority: priority.key,
+      priorityLabel: priority.label,
+      title: `Confirm ${legItem.name}`,
+      note: `${legItem.pick}. ${legItem.detail}`,
+      href: transportLink(legItem),
+      linkLabel: "Check transport",
+    });
+  });
+
+  activityChecklistItems(route).forEach((item) => items.push(item));
+  items.push({
+    id: `${route.id}|admin|kitty`,
+    priority: "normal",
+    priorityLabel: "Set up",
+    title: "Create shared costs pot",
+    note: "Agree how the group will split hostels, transfers, ferries, surf lessons and deposits.",
+  });
+  items.push({
+    id: `${route.id}|admin|documents`,
+    priority: "soon",
+    priorityLabel: "Before booking",
+    title: "Check IDs, insurance and cards",
+    note: "Everyone needs valid ID/passport, travel insurance, and a card that works in Portugal, Spain and France if Route 3 wins.",
+  });
+
+  return items;
+}
+
+function stayPriority(cityId) {
+  if (cityId === "sansebastian") return { key: "urgent", label: "Book first" };
+  if (cityId === "lisbon" || cityId === "biarritz" || cityId === "nazare" || cityId === "vigo") return { key: "soon", label: "High risk" };
+  return { key: "normal", label: "Book next" };
+}
+
+function transportPriority(legItem) {
+  const text = `${legItem.name} ${legItem.detail}`.toLowerCase();
+  if (text.includes("san sebastian") || text.includes("biarritz") || text.includes("8-11") || text.includes("11-13")) {
+    return { key: "urgent", label: "Price early" };
+  }
+  if (text.includes("shuttle") || text.includes("transfer") || text.includes("fiddly")) {
+    return { key: "soon", label: "Group quote" };
+  }
+  return { key: "normal", label: "Check times" };
+}
+
+function transportLink(legItem) {
+  const text = legItem.name.toLowerCase();
+  if (text.includes("porto to san sebastian")) return "https://www.alsa.com/en/coach/porto-san-sebastian";
+  if (text.includes("porto to vigo")) return "https://turismo.vigo.org/en/porto";
+  if (text.includes("train") || legItem.pick.toLowerCase().includes("train")) return "https://www.cp.pt/";
+  if (legItem.pick.toLowerCase().includes("coach")) return "https://rede-expressos.pt/en";
+  return "https://www.google.com/maps";
+}
+
+function activityChecklistItems(route) {
+  const cityIds = route.stops.map((item) => item.cityId);
+  const items = [];
+
+  if (cityIds.includes("peniche")) {
+    items.push({
+      id: `${route.id}|activity|berlengas`,
+      priority: "soon",
+      priorityLabel: "Reserve",
+      title: "Decide Berlengas boat day",
+      note: "Weather and boat capacity matter in August. Book only if the Peniche stop stays in the chosen route.",
+      href: "https://visitpeniche.pt/",
+      linkLabel: "Visit Peniche",
+    });
+  }
+
+  if (cityIds.includes("vigo")) {
+    items.push({
+      id: `${route.id}|activity|cies`,
+      priority: "urgent",
+      priorityLabel: "Permit needed",
+      title: "Reserve Cies Islands ferry/permit",
+      note: "Summer access is capacity-controlled, so this needs checking before Route 2 is locked.",
+      href: "https://turismo.vigo.org/en/cies-islands",
+      linkLabel: "Cies info",
+    });
+  }
+
+  if (cityIds.includes("ericeira") || cityIds.includes("peniche")) {
+    items.push({
+      id: `${route.id}|activity|surf`,
+      priority: "normal",
+      priorityLabel: "Group quote",
+      title: "Get surf lesson prices",
+      note: "Ask hostels/surf schools for a ten-person lesson or board-hire bundle before arrival.",
+    });
+  }
+
+  if (cityIds.includes("sansebastian")) {
+    items.push({
+      id: `${route.id}|activity|semana-grande`,
+      priority: "urgent",
+      priorityLabel: "Plan nights",
+      title: "Plan Semana Grande evenings",
+      note: "You overlap the 8-15 August 2026 festival. Keep dinner and fireworks timing loose around La Concha.",
+      href: "https://sansebastianturismoa.eus/en/agenda/semana-grande-2026/",
+      linkLabel: "Festival info",
+    });
+  }
+
+  return items;
+}
+
 function renderCity() {
   const stopItem = currentStop();
   const cityItem = cities[selectedCityId];
@@ -1102,6 +1429,22 @@ function countLabel(count, singular) {
   return `${count} ${count === 1 ? singular : `${singular}s`}`;
 }
 
+function loadChecklistState() {
+  try {
+    return JSON.parse(localStorage.getItem(checklistStorageKey)) || {};
+  } catch (error) {
+    return {};
+  }
+}
+
+function saveChecklistState() {
+  try {
+    localStorage.setItem(checklistStorageKey, JSON.stringify(checkedChecklistItems));
+  } catch (error) {
+    // Ignore private browsing/storage errors; the checklist still works for the session.
+  }
+}
+
 function hostelworldExactUrl(cityId, stopItem) {
   const base = hostelworldCityUrls[cityId] || "https://www.hostelworld.com/";
   const [dateFrom, dateTo] = datesToIso(stopItem.dates);
@@ -1111,6 +1454,34 @@ function hostelworldExactUrl(cityId, stopItem) {
 function datesToIso(label) {
   const [start, end] = label.split(" - ");
   return [datePartToIso(start), datePartToIso(end)];
+}
+
+function addDaysIso(iso, days) {
+  const date = isoToDate(iso);
+  date.setUTCDate(date.getUTCDate() + days);
+  return dateToIso(date);
+}
+
+function formatDateParts(iso) {
+  const date = isoToDate(iso);
+  const weekdays = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+  const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+  return {
+    weekday: weekdays[date.getUTCDay()],
+    date: `${date.getUTCDate()} ${months[date.getUTCMonth()]}`,
+  };
+}
+
+function isoToDate(iso) {
+  const [year, month, day] = iso.split("-").map(Number);
+  return new Date(Date.UTC(year, month - 1, day));
+}
+
+function dateToIso(date) {
+  const year = date.getUTCFullYear();
+  const month = String(date.getUTCMonth() + 1).padStart(2, "0");
+  const day = String(date.getUTCDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
 }
 
 function datePartToIso(part) {
@@ -1263,6 +1634,7 @@ function placeMarkerStyle(category) {
 function selectCity(cityId, shouldZoom) {
   selectedCityId = cityId;
   renderItinerary();
+  renderOperations();
   renderCity();
   drawRoute(false);
 
